@@ -1,0 +1,13 @@
+#!/bin/sh
+# post-removal script.
+
+echo "+ removing distnodeinfo from crontab"
+sed \
+  -e "/distnodeinfo/d" \
+  -i "${IPKG_INSTROOT}/etc/crontabs/root"
+
+if [ -z "${IPKG_INSTROOT}" ]; then
+  echo "+ restarting cron"
+  /etc/init.d/cron restart
+fi
+
