@@ -20,9 +20,14 @@ sed \
 #echo "*/10 * * * * /usr/sbin/p2ptbl gossip /tmp/p2ptbl/distnodeinfo 1000 br-mesh" \
 #  >> "${IPKG_INSTROOT}/etc/crontabs/root"
 
+min1=$(</dev/urandom tr -dc "0-5"| head -c1)
+min2=$(</dev/urandom tr -dc "0-9"| head -c1)
+
+[ "${min1}" = "0" ] && min1=""
+
 echo "* * * * * /usr/sbin/distnodeinfo
 */30 * * * * /usr/sbin/distnodeinfo sendown
-* */1 * * * /usr/sbin/distnodeinfo sendall" \
+${min1}${min2} * * * * /usr/sbin/distnodeinfo sendall" \
   >> "${IPKG_INSTROOT}/etc/crontabs/root"
 
 if [ -z "${IPKG_INSTROOT}" ]; then
