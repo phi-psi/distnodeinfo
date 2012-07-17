@@ -92,7 +92,7 @@ cat /tmp/p2ptbl/distnodeinfo | \
     if   [ "${BATMAC}" = "" ]; then return 0
     elif [ $TTL -gt 0 ]; then
       filesgen
-    elif [ $(checknodeonline) -gt 0 ]; then
+    elif [ $(checknodeonline) -lt 30 ]; then
       TTL=50
       filesgen
     fi
