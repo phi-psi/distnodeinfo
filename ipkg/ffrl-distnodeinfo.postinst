@@ -1,0 +1,32 @@
+#!/bin/sh
+# post-install script.
+
+if [ ! -f "${IPKG_INSTROOT}/etc/crontabs/root" ]; then
+  echo "+ crontab 'root' not found, creating file"
+  touch "${IPKG_INSTROOT}/etc/crontabs/root"
+
+  if [ -z "${IPKG_INSTROOT}" ]; then
+    echo "+ enabling cron"
+    /etc/init.d/cron enable
+  fi
+fi
+
+echo "+ adding distnodeinfo to crontab"
+sed \
+  -e "/distnodeinfo/d" \
+  -i "${IPKG_INSTROOT}/etc/crontabs/root"
+
+# p2ptbl deactivated, distnodeinfo tweets by itself
+#echo "*/10 * * * * /usr/sbin/p2ptbl gossip /tmp/p2ptbl/distnodeinfo 1000 br-mesh" \
+#  >> "${IPKG_INSTROOT}/etc/crontabs/root"
+
+echo "* * * * * /usr/sbin/distnodeinfo
+*/30 * * * * /usr/sbin/distnodeinfo sendown
+* */1 * * * /usr/sbin/distnodeinfo sendall" \
+  >> "${IPKG_INSTROOT}/etc/crontabs/root"
+
+if [ -z "${IPKG_INSTROOT}" ]; then
+  echo "+ restarting cron"
+  /etc/init.d/cron restart
+fi
+

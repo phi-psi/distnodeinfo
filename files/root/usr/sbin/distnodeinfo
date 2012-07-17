@@ -1,0 +1,176 @@
+#!/bin/sh
+#
+# distnodeinfo - Distributed information service of Freifunk Rheinland nodes
+#
+# Copyright (C) 2012  Philipp Psurek <phip@vmail.me>
+#                     Freifunk Rheinland e. V.
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# * * * * * /usr/sbin/distnodeinfo
+# */30 * * * * /usr/sbin/distnodeinfo sendown
+# * */1 * * * /usr/sbin/distnodeinfo sendall
+
+updateiv=3600
+
+# Verzeichnisse generieren
+[ ! -d /tmp/p2ptbl ] && mkdir /tmp/p2ptbl
+[ ! -f /tmp/p2ptbl/distnodeinfo ] && touch /tmp/p2ptbl/distnodeinfo
+#[ ! -e /etc/bat-hosts ] && ln -s /tmp/bat-hosts /etc/bat-hosts
+[ ! -f /tmp/bat-host ] && touch /tmp/bat-hosts
+
+thisnode(){ # jede Minute wird dies erledigt
+# Daten dieses Knotens vorbereiten
+BATMAC=$(batctl o | grep MainIF | sed -e "s:.*/::g" -e "s/ (.*//g" || exit 1)
+TTL="60" # eine Stunde
+#host=$(uname -n)
+host=$(uci get node.ffrl.name 2> /dev/null)
+cell=$(uci get node.ffrl.cell 2> /dev/null)
+name=$(uci get node.ffrl.user 2> /dev/null)
+latlong=$(uci get node.info.latlong 2> /dev/null)
+}
+
+put_p2p(){
+# Knoten in die p2p-Tabelle eintragen
+sed -e "/$BATMAC/d" -e "/^$/d" -i /tmp/p2ptbl/distnodeinfo
+nodeinfo="${BATMAC}\t${TTL}\t${host}\t${name}\t${cell}\t${latlong}"
+echo -e ${nodeinfo} >> /tmp/p2ptbl/distnodeinfo
+}
+
+put_bat(){
+# Knoten in die bat-Tabelle eintragen
+sed -e "/$BATMAC/d" -e "/^$/d" -i /tmp/bat-hosts
+batinfo="${BATMAC} ${host}.${name}"
+echo -e "${batinfo}" >> /tmp/bat-hosts
+}
+
+p2p_broadcast(){ 
+# nur eins von Beiden entweder
+broadcaster=$(which broadcaster || echo "hbbpc")
+echo -e "${nodeinfo}" | gzip | $broadcaster br-mesh p2ptbl/distnodeinfo -
+
+# oder
+#p2ptbl gossip /tmp/p2ptbl/distnodeinfo 1000 br-mesh
+}
+
+sendthisnode(){ 
+for mapServer in $(uci get node.info.mapserver 2> /dev/null); do
+  sendtomap
+done
+}
+
+sendallnodes(){ 
+for mapServer in $(uci get node.info.mapserver 2> /dev/null); do
+  cat /tmp/p2ptbl/distnodeinfo | \
+  while read BATMAC TTL  host name cell latlong; do
+    sendtomap
+  done
+done
+}
+
+sendtomap(){
+wget "$mapServer?update=${latlong}&updateiv=${updateiv}&note=${host}.${name}.ff${cell}" \
+-qO - > /dev/null 2> /dev/null
+}
+
+#-------------------------------------------------------------------------------
+gen_bathosts(){ # p2ptbl Auslesen, TTL verringern und verarbeiten
+cat /tmp/p2ptbl/distnodeinfo | \
+  while read BATMAC TTL  host name latlong; do
+    [ $TTL -ge 60 ] && TTL=59 || TTL=$(($TTL-1))
+    if   [ "${BATMAC}" = "" ]; then return 0
+    elif [ $TTL -gt 0 ]; then
+      filesgen
+    elif [ $(checknodeonline) -gt 0 ]; then
+      TTL=50
+      filesgen
+    fi
+  done
+mv /tmp/p2ptbl/distnodeinfo.tmp /tmp/p2ptbl/distnodeinfo > /dev/null 2>&1
+mv /tmp/bat-hosts.tmp /tmp/bat-hosts > /dev/null 2>&1
+}
+
+filesgen(){ # bat-hosts generieren
+echo -e "${BATMAC}\t${TTL}\t${host}\t${name}\t${cell}\t${latlong}" \
+     >> /tmp/p2ptbl/distnodeinfo.tmp
+echo -e "${BATMAC} ${host}.${name}" \
+     >> /tmp/bat-hosts.tmp
+}
+
+checknodeonline(){ # Überprüfen, ob der Knoten online ist
+batctl p -c4 $BATMAC | grep "packet loss" | sed -e "s/%.*//g" -e "s/.*, //g"
+}
+#-------------------------------------------------------------------------------
+
+commitonline(){
+exit 0
+}
+
+sendown(){
+# diesen Knoten per HBBP mitteilen
+thisnode
+put_p2p
+p2p_broadcast
+[ "$(fsm get inetable)" = "queen" ] && sendthisnode
+exit 0
+}
+
+sendall(){
+[ "$(fsm get inetable)" = "queen" ] && sendallnodes
+exit 0
+}
+
+all(){
+gen_bathosts
+thisnode
+put_p2p
+put_bat
+exit 0
+}
+
+# ------------------------------------------------------------------------------
+# Skriptablauf
+# ------------------------------------------------------------------------------
+
+# Eingabeverarbeitung
+if [ "$1" != "" ]; then
+  command=$1
+  comcase=$2
+  casearg=$3
+
+  case "$command" in
+  --help|-h)
+    usage
+    exit 0
+    ;;
+  --version|-v)
+    version
+    exit 0
+    ;;
+  sendown)
+    sendown
+    exit 0
+    ;;
+  sendall)
+    sendall
+    exit 0
+    ;;
+  *)
+    all
+    ;;
+  esac
+else
+  all
+fi
+
