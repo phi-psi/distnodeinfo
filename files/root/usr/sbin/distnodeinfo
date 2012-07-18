@@ -20,7 +20,7 @@
 
 # * * * * * /usr/sbin/distnodeinfo
 # */30 * * * * /usr/sbin/distnodeinfo sendown
-# * */1 * * * /usr/sbin/distnodeinfo sendall
+# xx * * * * /usr/sbin/distnodeinfo sendall
 
 updateiv=3600
 
@@ -73,7 +73,7 @@ done
 sendallnodes(){ 
 for mapServer in $(uci get node.info.mapserver 2> /dev/null); do
   cat /tmp/p2ptbl/distnodeinfo | \
-  while read BATMAC TTL  host name cell latlong; do
+  while read BATMAC TTL host name cell latlong; do
     sendtomap
   done
 done
@@ -88,7 +88,7 @@ sendtomap(){
 #-------------------------------------------------------------------------------
 gen_bathosts(){ # p2ptbl Auslesen, TTL verringern und verarbeiten
 cat /tmp/p2ptbl/distnodeinfo | \
-  while read BATMAC TTL  host name latlong; do
+  while read BATMAC TTL  host name cell latlong; do
     [ $TTL -ge 60 ] && TTL=59 || TTL=$(($TTL-1))
     if   [ "${BATMAC}" = "" ]; then return 0
     elif [ $TTL -gt 0 ]; then
