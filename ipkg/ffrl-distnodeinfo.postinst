@@ -35,7 +35,7 @@ if [ -z "${IPKG_INSTROOT}" ]; then
   /etc/init.d/cron restart
 fi
 
-[ ! -f /usr/sbin/p2ptbl-recv ] && {
+[ ! -f "${IPKG_INSTROOT}/usr/sbin/p2ptbl-recv" ] && {
 echo "+ link /sbin/p2ptbl-recv with future /usr/sbin/p2ptbl-recv"
-ln -s /sbin/p2ptbl-recv /usr/sbin/p2ptbl-recv
+ln -s "${IPKG_INSTROOT}/sbin/p2ptbl-recv" "${IPKG_INSTROOT}/usr/sbin/p2ptbl-recv"
 }
