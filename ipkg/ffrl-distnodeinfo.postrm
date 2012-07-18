@@ -11,3 +11,7 @@ if [ -z "${IPKG_INSTROOT}" ]; then
   /etc/init.d/cron restart
 fi
 
+[ -L /usr/sbin/p2ptbl-recv ] && {
+echo "+ remove link to /sbin/p2ptbl-recv"
+rm /sbin/p2ptbl-recv}
+
