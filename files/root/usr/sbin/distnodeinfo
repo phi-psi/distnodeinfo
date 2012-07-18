@@ -80,7 +80,7 @@ done
 }
 
 sendtomap(){
-[ "${latlong}" != "" ] wget \
+[ "${latlong}" != "" ] && wget \
 "$mapServer?update=${latlong}&updateiv=${updateiv}&note=${host}.${name}.ff${cell}" \
 -qO - > /dev/null 2> /dev/null
 }
