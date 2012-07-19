@@ -57,7 +57,7 @@ echo -e "${batinfo}" >> /tmp/bat-hosts
 
 p2p_broadcast(){ 
 # nur eins von Beiden entweder
-broadcaster=$(which broadcaster || echo "hbbpc")
+broadcaster=$(which broadcaster || which hbbpp ||  echo "hbbpc")
 echo -e "${nodeinfo}" | gzip | $broadcaster br-mesh p2ptbl/distnodeinfo -
 
 # oder
@@ -88,7 +88,7 @@ sendtomap(){
 #-------------------------------------------------------------------------------
 gen_bathosts(){ # p2ptbl Auslesen, TTL verringern und verarbeiten
 cat /tmp/p2ptbl/distnodeinfo | \
-  while read BATMAC TTL  host name cell latlong; do
+  while read BATMAC TTL host name cell latlong; do
     [ $TTL -ge 60 ] && TTL=59 || TTL=$(($TTL-1))
     if   [ "${BATMAC}" = "" ]; then return 0
     elif [ $TTL -gt 0 ]; then
