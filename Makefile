@@ -12,7 +12,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffrl-distnodeinfo
-PKG_VERSION:=0.0.20120719
+PKG_VERSION:=0.0.20120720
 PKG_RELEASE:=1
 
 include $(INCLUDE_DIR)/package.mk

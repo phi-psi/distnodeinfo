@@ -36,8 +36,8 @@ if [ -z "${IPKG_INSTROOT}" ]; then
 fi
 
 if [ ! -e "${IPKG_INSTROOT}/usr/sbin/p2ptbl-recv" ]; then
-  echo "+ link /sbin/p2ptbl-recv with future /usr/sbin/p2ptbl-recv" && \
-    ln -s "${IPKG_INSTROOT}/sbin/p2ptbl-recv" \
+  echo "+ link future /usr/sbin/p2ptbl-recv with present /sbin/p2ptbl-recv" && \
+    ln -s "/sbin/p2ptbl-recv" \
       "${IPKG_INSTROOT}/usr/sbin/p2ptbl-recv" 2> /dev/null || true
 fi
 
