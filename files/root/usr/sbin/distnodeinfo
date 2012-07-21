@@ -123,12 +123,12 @@ sendown(){
 thisnode
 put_p2p
 p2p_broadcast
-[ "$(fsm get inetable)" = "queen" ] && sendthisnode
+[ "$(fsm get inetable 2> /dev/null)" = "queen" ] && sendthisnode
 exit 0
 }
 
 sendall(){
-[ "$(fsm get inetable)" = "queen" ] && sendallnodes
+[ "$(fsm get inetable 2> /dev/null)" = "queen" ] && sendallnodes
 exit 0
 }
 
