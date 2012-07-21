@@ -91,10 +91,13 @@ cat /tmp/p2ptbl/distnodeinfo | \
   while read BATMAC TTL host name cell latlong; do
     [ $TTL -ge 60 ] && TTL=59 || TTL=$(($TTL-1))
     if   [ "${BATMAC}" = "" ]; then return 0
-    elif [ $TTL -gt 0 ]; then
+    elif [ $TTL -gt 5 ]; then
       filesgen
-    elif [ $(checknodeonline) -lt 30 ]; then
-      TTL=50
+    elif [ $TTL -gt 0 ]; then
+      [ $(checknodeonline) -lt 30 ] && TTL=60 && || true
+      filesgen
+    elif [ $(checknodeonline_hard) -lt 96 ]; then
+      TTL=60
       filesgen
     fi
   done
@@ -111,6 +114,10 @@ echo -e "${BATMAC} ${host}.${name}" \
 
 checknodeonline(){ # Überprüfen, ob der Knoten online ist
 batctl p -c4 $BATMAC | grep "packet loss" | sed -e "s/%.*//g" -e "s/.*, //g"
+}
+
+checknodeonline_hard(){ # Überprüfen, ob der Knoten wirklich online ist
+batctl p -c21 $BATMAC | grep "packet loss" | sed -e "s/%.*//g" -e "s/.*, //g"
 }
 #-------------------------------------------------------------------------------
 
