@@ -94,7 +94,7 @@ cat /tmp/p2ptbl/distnodeinfo | \
     elif [ $TTL -gt 5 ]; then
       filesgen
     elif [ $TTL -gt 0 ]; then
-      [ $(checknodeonline) -lt 30 ] && TTL=60 && || true
+      [ $(checknodeonline) -lt 30 ] && TTL=60 || true
       filesgen
     elif [ $(checknodeonline_hard) -lt 96 ]; then
       TTL=60
